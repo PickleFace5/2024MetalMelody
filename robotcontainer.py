@@ -11,10 +11,12 @@ from commands2.sysid import SysIdRoutine
 
 from constants import Constants
 from generated.tuner_constants import TunerConstants
-from subsystems.intake import Intake
+from subsystems.old_intake import Intake
 from subsystems.leds import LedSubsystem
 from subsystems.lift import Lift
 from subsystems.pivot import Pivot
+from subsystems.intake import IntakeSubsystem
+from subsystems.superstructure import Superstructure
 from telemetry import Telemetry
 
 import math
@@ -81,10 +83,13 @@ class RobotContainer:
         self._face.heading_controller = PhoenixPIDController(18.749, 0.45773, 0)
         self._face.heading_controller.enableContinuousInput(-math.pi, math.pi)
 
-        self.intake = Intake()
+        self.old_intake = Intake()
+        self.intake = IntakeSubsystem()
         self.leds = LedSubsystem()
         self.lift = Lift()
         self.pivot = Pivot()
+
+        self.superstructure = Superstructure(self.intake)
 
         # Path follower
         self._auto_chooser = AutoBuilder.buildAutoChooser("Auto Chooser")
@@ -173,7 +178,7 @@ class RobotContainer:
         )
 
         self._function_controller.x().onTrue(
-            self.pivot.runOnce(self.pivot.stow).alongWith(self.intake.runOnce(self.intake.stop))
+            self.pivot.runOnce(self.pivot.stow).alongWith(self.old_intake.runOnce(self.old_intake.stop))
         )
 
         self._function_controller.b().whileTrue(
@@ -185,7 +190,7 @@ class RobotContainer:
         )
 
         self._function_controller.leftBumper().onTrue(
-            IntakeAndStow(self.intake, self.pivot)
+            IntakeAndStow(self.old_intake, self.pivot)
                 .andThen(VibrateController(self._driver_controller, XboxController.RumbleType.kBothRumble, 0.75))
                 .alongWith(VibrateController(self._function_controller, XboxController.RumbleType.kBothRumble, 0.25))
         )
@@ -193,9 +198,9 @@ class RobotContainer:
         self._function_controller.rightBumper().onTrue(
             self.pivot.runOnce(lambda: self.pivot.pivotMotor.set_control(DutyCycleOut(0.1)))
                 .onlyIf(lambda: self.pivot.getState() is PivotStates.SCORE_UP)
-                .alongWith(self.intake.runOnce(self.intake.disencumber))
+                .alongWith(self.old_intake.runOnce(self.old_intake.disencumber))
         ).onFalse(
-            self.intake.runOnce(self.intake.stop).alongWith(self.pivot.runOnce(self.pivot.stow))
+            self.old_intake.runOnce(self.old_intake.stop).alongWith(self.pivot.runOnce(self.pivot.stow))
         )
 
         self._function_controller.leftStick().onTrue(

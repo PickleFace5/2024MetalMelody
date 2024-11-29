@@ -1,5 +1,5 @@
 from commands2 import Command
-from subsystems.intake import Intake
+from subsystems.old_intake import Intake
 from subsystems.pivot import Pivot
 
 class IntakeAndStow(Command):
