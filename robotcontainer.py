@@ -82,8 +82,7 @@ class RobotContainer:
         )
         self._face.heading_controller = PhoenixPIDController(18.749, 0.45773, 0)
         self._face.heading_controller.enableContinuousInput(-math.pi, math.pi)
-
-        self.old_intake = Intake()
+        
         self.intake = IntakeSubsystem()
         self.leds = LedSubsystem()
         self.lift = Lift()
@@ -191,20 +190,6 @@ class RobotContainer:
 
         self._function_controller.a().onTrue(
             self.lift.runOnce(self.lift.compressFull).alongWith(self.pivot.runOnce(self.pivot.stow))
-        )
-
-        self._function_controller.leftBumper().onTrue(
-            IntakeAndStow(self.old_intake, self.pivot)
-                .andThen(VibrateController(self._driver_controller, XboxController.RumbleType.kBothRumble, 0.75))
-                .alongWith(VibrateController(self._function_controller, XboxController.RumbleType.kBothRumble, 0.25))
-        )
-
-        self._function_controller.rightBumper().onTrue(
-            self.pivot.runOnce(lambda: self.pivot.pivotMotor.set_control(DutyCycleOut(0.1)))
-                .onlyIf(lambda: self.pivot.getState() is PivotStates.SCORE_UP)
-                .alongWith(self.old_intake.runOnce(self.old_intake.disencumber))
-        ).onFalse(
-            self.old_intake.runOnce(self.old_intake.stop).alongWith(self.pivot.runOnce(self.pivot.stow))
         )
 
         self._function_controller.leftStick().onTrue(

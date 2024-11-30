@@ -19,7 +19,7 @@ class Intake(Subsystem):
         super().__init__()
         self.setName("Intake")
         
-        self.intakeMotor = TalonFX(Constants.CanIDs.k_intake_motor)
+        self.intakeMotor = TalonFX(Constants.CanIDs.k_intake_motor + 17)
         intake_config = TalonFXConfiguration()
         intake_config.motor_output.with_neutral_mode(NeutralModeValue.BRAKE)
         intake_config.feedback.sensor_to_mechanism_ratio = Constants.IntakeConstants.k_gear_ratio

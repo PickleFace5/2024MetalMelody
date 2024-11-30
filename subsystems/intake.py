@@ -48,17 +48,18 @@ class IntakeSubsystem(StateSubsystem):
         self._intake_request = VoltageOut(0)
         self._intake_talon.set_control(self._intake_request)
 
+        gearbox = DCMotor.falcon500FOC()
         self._sim_model = DCMotorSim(
             LinearSystemId.DCMotorSystem(
-                DCMotor.falcon500FOC(),
+                gearbox,
                 0.01,
                 Constants.IntakeConstants.k_gear_ratio
             ),
-            DCMotor.falcon500FOC()
+            gearbox
         )
 
         ## Logging
-        self._intake_voltage = self._network_table.getDoubleTopic("Voltage").publish()
+        self._intake_voltage = self._network_table.getDoubleTopic("Output Voltage").publish()
         self._intake_rps = self._network_table.getDoubleTopic("Velocity RPS").publish()
 
     def periodic(self):
@@ -85,7 +86,7 @@ class IntakeSubsystem(StateSubsystem):
 
         intake_sim = self._intake_talon.sim_state
         intake_sim.set_supply_voltage(RobotController.getBatteryVoltage())
-        self._sim_model.setInputVoltage(intake_sim.motor_voltage)
+        self._sim_model.setInputVoltage(self._intake_request.output)
         self._sim_model.update(0.02)
 
         intake_sim.set_raw_rotor_position(
@@ -99,6 +100,7 @@ class IntakeSubsystem(StateSubsystem):
             units.radiansToRotations(self._sim_model.getAngularAcceleration())
             * Constants.IntakeConstants.k_gear_ratio
         )
+
 
     def _handle_state_transition(self) -> CurrentState:
         match self._desired_state:
