@@ -5,6 +5,7 @@ from commands2 import Command, InstantCommand
 from subsystems import StateSubsystem
 from subsystems.intake import IntakeSubsystem
 from subsystems.pivot import PivotSubsystem
+from subsystems.swerve import SwerveSubsystem
 
 class Superstructure(StateSubsystem):
 
@@ -16,11 +17,12 @@ class Superstructure(StateSubsystem):
         STOPPED = 0
         INTAKE_PIECE = 1
 
-    def __init__(self, intake: IntakeSubsystem, pivot: PivotSubsystem) -> None:
+    def __init__(self, intake: IntakeSubsystem, pivot: PivotSubsystem, swerve: SwerveSubsystem) -> None:
         super().__init__("Superstructure")
 
         self.intake = intake
         self.pivot = pivot
+        self.swerve = swerve
 
     def periodic(self):
         super().periodic()

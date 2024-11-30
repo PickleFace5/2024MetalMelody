@@ -86,7 +86,7 @@ class RobotContainer:
         self.lift = Lift()
         self.pivot = PivotSubsystem()
 
-        self.superstructure = Superstructure(self.intake, self.pivot)
+        self.superstructure = Superstructure(self.intake, self.pivot, self.drivetrain)
 
         # Path follower
         self._auto_chooser = AutoBuilder.buildAutoChooser("Auto Chooser")

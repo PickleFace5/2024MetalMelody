@@ -1,5 +1,6 @@
 from commands2 import Command, Subsystem
 from commands2.sysid import SysIdRoutine
+from enum import Enum
 from limelight import LimelightHelpers
 import math
 from pathplannerlib.auto import AutoBuilder, RobotConfig
@@ -10,12 +11,20 @@ from typing import Callable, overload
 from wpilib import DriverStation, Notifier, RobotController
 from wpimath.geometry import Rotation2d
 
+from subsystems import StateSubsystem
 
-class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
+
+class SwerveSubsystem(StateSubsystem, swerve.SwerveDrivetrain):
     """
     Class that extends the Phoenix 6 SwerveDrivetrain class and implements
     Subsystem so it can easily be used in command-based projects.
     """
+
+    class CurrentState(Enum):
+        OFF = 0
+    
+    class DesiredState(Enum):
+        OFF = 0
 
     _SIM_LOOP_PERIOD: units.second = 0.005
 
@@ -108,7 +117,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         arg4=None,
         arg5=None,
     ):
-        Subsystem.__init__(self)
+        super().__init__("Drivetrain")
         swerve.SwerveDrivetrain.__init__(
             self, drivetrain_constants, arg2, arg3, arg4, arg5
         )
@@ -263,6 +272,7 @@ class CommandSwerveDrivetrain(Subsystem, swerve.SwerveDrivetrain):
         return self._sys_id_routine_to_apply.dynamic(direction)
 
     def periodic(self):
+        super().periodic()
         # Periodically try to apply the operator perspective.
         # If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
         # This allows us to correct the perspective in case the robot code restarts mid-match.
