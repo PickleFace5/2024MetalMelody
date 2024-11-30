@@ -75,6 +75,8 @@ class PivotSubsystem(StateSubsystem):
             case _:
                 raise ValueError(f'Invalid state for pivot subsystem {self._current_state}')
             
+        self._pivot_talon.set_control(self._pivot_request)
+            
         self._position_pub.set(self._pivot_talon.get_position().value)
 
     def simulationPeriodic(self):

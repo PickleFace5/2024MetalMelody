@@ -79,7 +79,9 @@ class IntakeSubsystem(StateSubsystem):
             case _:
                 self._intake_request.output = 0
 
-        self._intake_voltage.set(self._intake_request.output)
+        self._intake_talon.set_control(self._intake_request)
+
+        self._intake_voltage.set(self._intake_talon.get_motor_voltage().value)
         self._intake_rps.set(self._intake_talon.get_velocity().value)
 
     def simulationPeriodic(self):
