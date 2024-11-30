@@ -176,9 +176,13 @@ class RobotContainer:
         self._function_controller.y().onTrue(
             self.lift.runOnce(self.lift.raiseFull).alongWith(self.pivot.runOnce(self.pivot.scoreDownwards))
         )
-
+        """
         self._function_controller.x().onTrue(
             self.pivot.runOnce(self.pivot.stow).alongWith(self.old_intake.runOnce(self.old_intake.stop))
+        )
+        """
+        self._function_controller.x().onTrue(
+            self.superstructure._set_desired_state_command(self.superstructure.DesiredState.INTAKE_PIECE)
         )
 
         self._function_controller.b().whileTrue(
