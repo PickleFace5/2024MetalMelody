@@ -29,6 +29,8 @@ class StateSubsystem(Subsystem, ABC, metaclass=StateSubsystemMeta):
         self._current_state = current_state
         self._desired_state = desired_state
 
+        self._nt_publishers = []
+
         self._current_state_pub = self._network_table.getStringTopic("Current State").publish()
         self._desired_state_pub = self._network_table.getStringTopic("Desired State").publish()
 
@@ -39,11 +41,9 @@ class StateSubsystem(Subsystem, ABC, metaclass=StateSubsystemMeta):
         self._desired_state = desired_state
 
     def periodic(self):
-        print(self.__class__.__name__ + " " + str(self._current_state))
         self._current_state_pub.set(self._current_state.name.title().replace("_", " "))
         self._desired_state_pub.set(self._desired_state.name.title().replace("_", " "))
 
     @abstractmethod
     def _handle_state_transition(self) -> CurrentState:
         pass
-    

@@ -4,15 +4,8 @@ from wpilib import DataLogManager, DriverStation, Field2d, SmartDashboard
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
 
-class Telemetry:
-    def __init__(self, max_speed: units.meters_per_second):
-        """
-        Construct a telemetry object with the specified max speed of the robot.
-
-        :param max_speed: Maximum speed
-        :type max_speed: units.meters_per_second
-        """
-        self._max_speed = max_speed
+class RobotState:
+    def __init__(self):
         DriverStation.startDataLog(DataLogManager.getLog())
 
         self._field = Field2d()
@@ -28,9 +21,9 @@ class Telemetry:
         self._module_states = self._table.getStructArrayTopic("moduleStates", SwerveModuleState).publish()
         self._module_targets = self._table.getStructArrayTopic("moduleTargets", SwerveModuleState).publish()
 
-    def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
+    def log_drivetrain_state(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """
-        Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger.
+        Accept the swerve drive state and log it to NetworkTables.
         """
 
         self._field.setRobotPose(state.pose)

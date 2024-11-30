@@ -1,10 +1,11 @@
 from enum import Enum
 
 from phoenix6.configs import TalonFXConfiguration
-from phoenix6.configs.config_groups import CurrentLimitsConfigs
+from phoenix6.configs.config_groups import CurrentLimitsConfigs, Slot0Configs
 from phoenix6.hardware import TalonFX
 from phoenix6.controls import VoltageOut
-from wpilib import RobotController
+from phoenix6 import unmanaged
+from wpilib import DriverStation, RobotController
 from wpilib.simulation import DCMotorSim
 from wpimath import units
 from wpimath.system.plant import DCMotor, LinearSystemId
@@ -23,6 +24,7 @@ class IntakeSubsystem(StateSubsystem):
      .with_supply_current_limit_enable(True)
      .with_supply_current_limit(20))
     _talon_config.feedback.sensor_to_mechanism_ratio = Constants.IntakeConstants.k_gear_ratio
+    _talon_config.slot0 = Slot0Configs().with_k_p(1)
 
     class CurrentState(Enum):
         OFF = 0
@@ -44,6 +46,7 @@ class IntakeSubsystem(StateSubsystem):
         self._intake_talon.configurator.apply(self._talon_config)
 
         self._intake_request = VoltageOut(0)
+        self._intake_talon.set_control(self._intake_request)
 
         self._sim_model = DCMotorSim(
             LinearSystemId.DCMotorSystem(
@@ -53,6 +56,10 @@ class IntakeSubsystem(StateSubsystem):
             ),
             DCMotor.falcon500FOC()
         )
+
+        ## Logging
+        self._intake_voltage = self._network_table.getDoubleTopic("Voltage").publish()
+        self._intake_rps = self._network_table.getDoubleTopic("Velocity RPS").publish()
 
     def periodic(self):
         super().periodic()
@@ -70,6 +77,9 @@ class IntakeSubsystem(StateSubsystem):
                 self._intake_request.output = self.EJECT_VOLTAGE
             case _:
                 self._intake_request.output = 0
+
+        self._intake_voltage.set(self._intake_request.output)
+        self._intake_rps.set(self._intake_talon.get_velocity().value)
 
     def simulationPeriodic(self):
 

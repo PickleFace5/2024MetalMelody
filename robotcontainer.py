@@ -17,7 +17,7 @@ from subsystems.lift import Lift
 from subsystems.pivot import Pivot
 from subsystems.intake import IntakeSubsystem
 from subsystems.superstructure import Superstructure
-from telemetry import Telemetry
+from telemetry import RobotState
 
 import math
 from pathplannerlib.auto import AutoBuilder
@@ -53,7 +53,7 @@ class RobotContainer:
         self._driver_controller = commands2.button.CommandXboxController(0)
         self._function_controller = commands2.button.CommandXboxController(1)
 
-        self._logger = Telemetry(self._max_speed)
+        self._robot_state = RobotState()
 
         self.drivetrain = TunerConstants.create_drivetrain()
 
@@ -216,7 +216,7 @@ class RobotContainer:
         )
 
         self.drivetrain.register_telemetry(
-            lambda state: self._logger.telemeterize(state)
+            lambda state: self._robot_state.log_drivetrain_state(state)
         )
 
     def getAutonomousCommand(self) -> commands2.Command:
