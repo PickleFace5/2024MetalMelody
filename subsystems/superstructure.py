@@ -4,6 +4,7 @@ from commands2 import Command, InstantCommand
 
 from subsystems import StateSubsystem
 from subsystems.intake import IntakeSubsystem
+from subsystems.pivot import PivotSubsystem
 
 class Superstructure(StateSubsystem):
 
@@ -15,10 +16,11 @@ class Superstructure(StateSubsystem):
         STOPPED = 0
         INTAKE_PIECE = 1
 
-    def __init__(self, intake: IntakeSubsystem):
+    def __init__(self, intake: IntakeSubsystem, pivot: PivotSubsystem) -> None:
         super().__init__("Superstructure")
 
         self.intake = intake
+        self.pivot = pivot
 
     def periodic(self):
         super().periodic()
@@ -48,9 +50,11 @@ class Superstructure(StateSubsystem):
 
     def _handle_stopped(self) -> None:
         self.intake.set_desired_state(IntakeSubsystem.DesiredState.OFF)
+        self.pivot.set_desired_state(PivotSubsystem.DesiredState.STOW)
 
     def _handle_intake_piece(self) -> None:
         self.intake.set_desired_state(IntakeSubsystem.DesiredState.INTAKE)
+        self.pivot.set_desired_state(PivotSubsystem.DesiredState.INTAKE)
 
-    def _set_desired_state_command(self, state: DesiredState) -> Command:
+    def set_desired_state_command(self, state: DesiredState) -> Command:
         return InstantCommand(lambda: self.set_desired_state(state))

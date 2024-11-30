@@ -14,7 +14,7 @@ from generated.tuner_constants import TunerConstants
 from subsystems.old_intake import Intake
 from subsystems.leds import LedSubsystem
 from subsystems.lift import Lift
-from subsystems.pivot import Pivot
+from subsystems.pivot import PivotSubsystem
 from subsystems.intake import IntakeSubsystem
 from subsystems.superstructure import Superstructure
 from telemetry import RobotState
@@ -30,9 +30,7 @@ from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
 from commands.manual_lift import ManualLift
-from commands.intake_and_stow import IntakeAndStow
 from commands.vibrate import VibrateController
-from subsystems.pivot import PivotStates
 
 class RobotContainer:
     """
@@ -86,9 +84,9 @@ class RobotContainer:
         self.intake = IntakeSubsystem()
         self.leds = LedSubsystem()
         self.lift = Lift()
-        self.pivot = Pivot()
+        self.pivot = PivotSubsystem()
 
-        self.superstructure = Superstructure(self.intake)
+        self.superstructure = Superstructure(self.intake, self.pivot)
 
         # Path follower
         self._auto_chooser = AutoBuilder.buildAutoChooser("Auto Chooser")
@@ -173,7 +171,7 @@ class RobotContainer:
         )
 
         self._function_controller.y().onTrue(
-            self.lift.runOnce(self.lift.raiseFull).alongWith(self.pivot.runOnce(self.pivot.scoreDownwards))
+            self.lift.runOnce(self.lift.raiseFull)#.alongWith(self.pivot.runOnce(self.pivot.scoreDownwards))
         )
         """
         self._function_controller.x().onTrue(
@@ -181,7 +179,7 @@ class RobotContainer:
         )
         """
         self._function_controller.x().onTrue(
-            self.superstructure._set_desired_state_command(self.superstructure.DesiredState.INTAKE_PIECE)
+            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.INTAKE_PIECE)
         )
 
         self._function_controller.b().whileTrue(
@@ -189,15 +187,15 @@ class RobotContainer:
         )
 
         self._function_controller.a().onTrue(
-            self.lift.runOnce(self.lift.compressFull).alongWith(self.pivot.runOnce(self.pivot.stow))
+            self.lift.runOnce(self.lift.compressFull)#.alongWith(self.pivot.runOnce(self.pivot.stow))
         )
 
         self._function_controller.leftStick().onTrue(
-            self.lift.runOnce(self.lift.scoreShoot).alongWith(self.pivot.runOnce(self.pivot.scoreUpwards))
+            self.lift.runOnce(self.lift.scoreShoot)#.alongWith(self.pivot.runOnce(self.pivot.scoreUpwards))
         )
 
         self._function_controller.rightStick().onTrue(
-            self.lift.runOnce(self.lift.raiseFull).alongWith(self.pivot.runOnce(self.pivot.stow))
+            self.lift.runOnce(self.lift.raiseFull)#.alongWith(self.pivot.runOnce(self.pivot.stow))
         )
 
         self.drivetrain.register_telemetry(

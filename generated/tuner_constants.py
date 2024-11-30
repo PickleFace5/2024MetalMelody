@@ -167,6 +167,7 @@ class TunerConstants:
         _front_left_y_pos,
         _invert_left_side,
         _front_left_steer_motor_inverted,
+        False
     )
     front_right = _constants_creator.create_module_constants(
         _front_right_steer_motor_id,
@@ -177,6 +178,7 @@ class TunerConstants:
         _front_right_y_pos,
         _invert_right_side,
         _front_right_steer_motor_inverted,
+        False
     )
     back_left = _constants_creator.create_module_constants(
         _back_left_steer_motor_id,
@@ -187,6 +189,7 @@ class TunerConstants:
         _back_left_y_pos,
         _invert_left_side,
         _back_left_steer_motor_inverted,
+        False
     )
     back_right = _constants_creator.create_module_constants(
         _back_right_steer_motor_id,
@@ -197,6 +200,7 @@ class TunerConstants:
         _back_right_y_pos,
         _invert_right_side,
         _back_right_steer_motor_inverted,
+        False
     )
 
     @classmethod
