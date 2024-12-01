@@ -4,6 +4,7 @@ from tokenize import untokenize
 from turtle import mode
 from typing import Any
 
+from commands2 import Command, InstantCommand
 from commands2.subsystem import Subsystem
 from ntcore import *
 from phoenix6.hardware import TalonFX
@@ -70,6 +71,9 @@ class StateSubsystem(Subsystem, ABC, metaclass=StateSubsystemMeta):
                                        * model[0].gearing())
             sim.set_rotor_acceleration(units.radiansToRotations(model[0].getAngularAcceleration())
                                        * model[0].gearing())
+            
+    def get_current_state(self) -> CurrentState:
+        return self._current_state
 
     def _add_talon_sim_model(self, talon: TalonFX, motor: DCMotor, gearing: float, 
                              moi: float=0.001) -> None:
@@ -104,4 +108,7 @@ class StateSubsystem(Subsystem, ABC, metaclass=StateSubsystemMeta):
 
     @abstractmethod
     def _handle_state_transition(self) -> CurrentState:
-        pass
+        raise NotImplementedError(f"{__class__.__name__} needs to include _handle_state_transition method.")
+    
+    def set_desired_state_command(self, state: DesiredState) -> Command:
+        return InstantCommand(lambda: self.set_desired_state(state))

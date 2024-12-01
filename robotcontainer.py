@@ -7,13 +7,13 @@
 import commands2
 import commands2.button
 import commands2.cmd
+from commands2.conditionalcommand import ConditionalCommand
 from commands2.sysid import SysIdRoutine
 
 from constants import Constants
 from generated.tuner_constants import TunerConstants
-from subsystems.old_intake import Intake
 from subsystems.leds import LedSubsystem
-from subsystems.lift import Lift
+from subsystems.lift import LiftSubsystem
 from subsystems.pivot import PivotSubsystem
 from subsystems.intake import IntakeSubsystem
 from subsystems.superstructure import Superstructure
@@ -23,13 +23,11 @@ import math
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.path import PathConstraints, PathPlannerPath
 from phoenix6 import swerve
-from phoenix6.controls import DutyCycleOut
 from phoenix6.swerve.utility.phoenix_pid_controller import PhoenixPIDController
-from wpilib import DriverStation, SmartDashboard, XboxController
+from wpilib import DriverStation, SmartDashboard
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
-from commands.manual_lift import ManualLift
 from commands.vibrate import VibrateController
 
 class RobotContainer:
@@ -83,14 +81,30 @@ class RobotContainer:
         
         self.intake = IntakeSubsystem()
         self.leds = LedSubsystem()
-        self.lift = Lift()
+        self.lift = LiftSubsystem()
         self.pivot = PivotSubsystem()
 
-        self.superstructure = Superstructure(self.intake, self.pivot, self.drivetrain)
+        self.superstructure = Superstructure(self.intake, self.pivot, self.drivetrain, self.lift)
 
         # Path follower
         self._auto_chooser = AutoBuilder.buildAutoChooser("Auto Chooser")
         SmartDashboard.putData("Auto Mode", self._auto_chooser)
+        
+        self.drivetrain.setDefaultCommand(
+            self.drivetrain.apply_request(
+                lambda: (
+                    self._drive.with_velocity_x(
+                        -self._driver_controller.getLeftY() * self._max_speed
+                    )
+                    .with_velocity_y(
+                        -self._driver_controller.getLeftX() * self._max_speed
+                    )
+                    .with_rotational_rate(
+                        -self._driver_controller.getRightX() * self._max_angular_rate
+                    )
+                )
+            )
+        )
 
         # Configure the button bindings
         self.configureButtonBindings()
@@ -101,25 +115,6 @@ class RobotContainer:
         instantiating a :GenericHID or one of its subclasses (Joystick or XboxController),
         and then passing it to a JoystickButton.
         """
-
-        # Note that X is defined as forward according to WPILib convention,
-        # and Y is defined as to the left according to WPILib convention.
-        self.drivetrain.setDefaultCommand(
-            # Drivetrain will execute this command periodically
-            self.drivetrain.apply_request(
-                lambda: (
-                    self._drive.with_velocity_x(
-                        -self._driver_controller.getLeftY() * self._max_speed
-                    )  # Drive forward with negative Y (forward)
-                    .with_velocity_y(
-                        -self._driver_controller.getLeftX() * self._max_speed
-                    )  # Drive left with negative X (left)
-                    .with_rotational_rate(
-                        -self._driver_controller.getRightX() * self._max_angular_rate
-                    )  # Drive counterclockwise with negative X (left)
-                )
-            )
-        )
 
         self._driver_controller.a().whileTrue(self.drivetrain.apply_request(lambda: self._brake))
         self._driver_controller.b().whileTrue(
@@ -141,7 +136,8 @@ class RobotContainer:
                 )
                 .with_target_direction(
                     # Gets the angle to our alliance's speaker
-                    (Constants.k_apriltag_layout.getTagPose(4 if (DriverStation.getAlliance() or DriverStation.Alliance.kBlue) == DriverStation.Alliance.kRed else 7).toPose2d().translation() - self.drivetrain.get_state().pose.translation()).angle() + Rotation2d.fromDegrees(180)
+                    (Constants.k_apriltag_layout.getTagPose(
+                        4 if (DriverStation.getAlliance() or DriverStation.Alliance.kBlue) == DriverStation.Alliance.kRed else 7).toPose2d().translation() - self.drivetrain.get_state().pose.translation()).angle() + Rotation2d.fromDegrees(180)
                 )
             )
         )
@@ -170,18 +166,47 @@ class RobotContainer:
             self.drivetrain.runOnce(lambda: self.drivetrain.seed_field_centric())
         )
 
+        self._function_controller.leftBumper().whileTrue(
+            ConditionalCommand(
+                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.INTAKE_NOTE),
+                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.FIX_NOTE),
+                lambda: self.lift.get_current_state() is not self.lift.CurrentState.RAISED
+            )
+        ).onFalse(
+            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_RETRACTED)
+        )
+        
+        self._function_controller.rightBumper().whileTrue(
+            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.EJECT_NOTE)
+        ).onFalse(
+            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.REGULAR_STATE)
+        )
+        
         self._function_controller.y().onTrue(
-            self.lift.runOnce(self.lift.raiseFull)#.alongWith(self.pivot.runOnce(self.pivot.scoreDownwards))
+            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.AMP_SCORE_NORMAL)
         )
+        
+        (self._function_controller.x() | self._driver_controller.x()).onTrue(
+            ConditionalCommand(
+                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_EXTENDED),
+                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_RETRACTED),
+                lambda: self.lift.get_current_state() is self.lift.CurrentState.RAISED
+            )
+        )
+        
+        self._function_controller.a().onTrue(
+            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_RETRACTED)
+        )
+        
+        self._function_controller.b().onTrue(
+            commands2.cmd.parallel(
+                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.CLIMB),
+                commands2.InstantCommand(lambda: self.lift.set_climb_output(-self._function_controller.getLeftTriggerAxis())).repeatedly()
+            )
+        )
+        
+        
         """
-        self._function_controller.x().onTrue(
-            self.pivot.runOnce(self.pivot.stow).alongWith(self.old_intake.runOnce(self.old_intake.stop))
-        )
-        """
-        self._function_controller.x().onTrue(
-            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.INTAKE_PIECE)
-        )
-
         self._function_controller.b().whileTrue(
             ManualLift(self._function_controller, self.lift)
         )
@@ -197,6 +222,7 @@ class RobotContainer:
         self._function_controller.rightStick().onTrue(
             self.lift.runOnce(self.lift.raiseFull)#.alongWith(self.pivot.runOnce(self.pivot.stow))
         )
+        """
 
         self.drivetrain.register_telemetry(
             lambda state: self._robot_state.log_drivetrain_state(state)

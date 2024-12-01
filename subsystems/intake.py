@@ -4,17 +4,16 @@ from phoenix6.configs import TalonFXConfiguration
 from phoenix6.configs.config_groups import CurrentLimitsConfigs, Slot0Configs
 from phoenix6.hardware import TalonFX
 from phoenix6.controls import VoltageOut
-from phoenix6 import unmanaged
-from wpilib import DriverStation, RobotController
-from wpilib.simulation import DCMotorSim
-from wpimath import units
-from wpimath.system.plant import DCMotor, LinearSystemId
+from phoenix6.signals import ForwardLimitValue
+from wpimath.system.plant import DCMotor
 
 from constants import Constants
 from subsystems import StateSubsystem
 
 
 class IntakeSubsystem(StateSubsystem):
+
+
     IDLING_VOLTAGE = 0.0
     INTAKE_VOLTAGE = 8.0
     EJECT_VOLTAGE = -8.0
@@ -25,6 +24,7 @@ class IntakeSubsystem(StateSubsystem):
      .with_supply_current_limit(20))
     _talon_config.feedback.sensor_to_mechanism_ratio = Constants.IntakeConstants.k_gear_ratio
     _talon_config.slot0 = Slot0Configs().with_k_p(1)
+
 
     class CurrentState(Enum):
         OFF = 0
@@ -47,17 +47,6 @@ class IntakeSubsystem(StateSubsystem):
 
         self._intake_request = VoltageOut(0)
         self._intake_talon.set_control(self._intake_request)
-        """
-        gearbox = DCMotor.falcon500FOC()
-        self._sim_model = DCMotorSim(
-            LinearSystemId.DCMotorSystem(
-                gearbox,
-                0.01,
-                Constants.IntakeConstants.k_gear_ratio
-            ),
-            gearbox
-        )
-        """
         self._add_talon_sim_model(self._intake_talon, 
                            DCMotor.falcon500FOC(), 
                            Constants.IntakeConstants.k_gear_ratio)
@@ -87,6 +76,10 @@ class IntakeSubsystem(StateSubsystem):
 
         self._intake_voltage.set(self._intake_talon.get_motor_voltage().value)
         self._intake_rps.set(self._intake_talon.get_velocity().value)
+        
+        if self.has_note:
+            self.set_desired_state(self.DesiredState.IDLE)
+        
 
     def _handle_state_transition(self) -> CurrentState:
         match self._desired_state:
@@ -100,3 +93,6 @@ class IntakeSubsystem(StateSubsystem):
                 return self.CurrentState.EJECTING
             case _:
                 return self.CurrentState.OFF
+            
+    def has_note(self) -> bool:
+        return self._intake_talon.get_forward_limit().value is ForwardLimitValue.CLOSED_TO_GROUND
