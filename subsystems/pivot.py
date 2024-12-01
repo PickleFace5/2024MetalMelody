@@ -5,7 +5,7 @@ from phoenix6.configs import TalonFXConfiguration
 from phoenix6.configs.config_groups import NeutralModeValue, InvertedValue
 from phoenix6.controls import MotionMagicDutyCycle
 from phoenix6 import unmanaged
-from wpilib import DriverStation, RobotController
+from wpilib import DriverStation, Mechanism2d, RobotController, SmartDashboard
 from wpilib.simulation import DCMotorSim
 from wpimath import units
 from wpimath.system.plant import DCMotor, LinearSystemId
@@ -38,14 +38,14 @@ class PivotSubsystem(StateSubsystem):
     def __init__(self):
         super().__init__("Pivot")
 
-        self._pivot_talon = TalonFX(Constants.CanIDs.k_pivot_motor)
-        self._pivot_talon.configurator.apply(self._pivot_config)
-        self._pivot_talon.set_position(0)
+        self.pivot_talon = TalonFX(Constants.CanIDs.k_pivot_motor)
+        self.pivot_talon.configurator.apply(self._pivot_config)
+        self.pivot_talon.set_position(0)
 
         self._pivot_request = MotionMagicDutyCycle(0)
-        self._pivot_talon.set_control(self._pivot_request)
+        self.pivot_talon.set_control(self._pivot_request)
 
-        self._add_talon_sim_model(self._pivot_talon, 
+        self._add_talon_sim_model(self.pivot_talon, 
                                   DCMotor.falcon500FOC(), 
                                   Constants.PivotConstants.k_gear_ratio)
 
@@ -69,9 +69,9 @@ class PivotSubsystem(StateSubsystem):
             case _:
                 raise ValueError(f'Invalid state for pivot subsystem {self._current_state}')
             
-        self._pivot_talon.set_control(self._pivot_request)
+        self.pivot_talon.set_control(self._pivot_request)
             
-        self._position_pub.set(self._pivot_talon.get_position().value)
+        self._position_pub.set(self.pivot_talon.get_position().value)
 
     def _handle_state_transition(self) -> CurrentState:
         

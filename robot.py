@@ -41,6 +41,7 @@ class MetalMelody(commands2.TimedCommandRobot):
         # and running subsystem periodic() methods.  This must be called from the robot's periodic
         # block in order for anything in the Command-based framework to work.
         commands2.CommandScheduler.getInstance().run()
+        self.container.robot_state.update_mechanism_2d()
 
     def disabledInit(self) -> None:
         """This function is called once each time the robot enters Disabled mode."""

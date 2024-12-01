@@ -36,10 +36,10 @@ class LiftSubsystem(StateSubsystem):
     def __init__(self):
         super().__init__("Lift")
         
-        self._master_talon = TalonFX(Constants.CanIDs.k_lift_right)
-        self._master_talon.configurator.apply(self._master_config)
-        self._master_talon.set_position(Constants.LiftConstants.k_top_pos)
-        self._add_talon_sim_model(self._master_talon, 
+        self.master_talon = TalonFX(Constants.CanIDs.k_lift_right)
+        self.master_talon.configurator.apply(self._master_config)
+        self.master_talon.set_position(Constants.LiftConstants.k_top_pos)
+        self._add_talon_sim_model(self.master_talon, 
                                   DCMotor.krakenX60FOC(), 
                                   Constants.LiftConstants.k_gear_ratio)
         
@@ -67,22 +67,22 @@ class LiftSubsystem(StateSubsystem):
         
         match self._current_state:
             case self.CurrentState.IDLE:
-                self._master_talon.set_control(self._stop_request)
+                self.master_talon.set_control(self._stop_request)
             case self.CurrentState.LOWERED:
                 self._postion_request.position = Constants.LiftConstants.k_bottom_pos
-                self._master_talon.set_control(self._postion_request)
+                self.master_talon.set_control(self._postion_request)
             case self.CurrentState.RAISED:
                 self._postion_request.position = Constants.LiftConstants.k_top_pos
-                self._master_talon.set_control(self._postion_request)
+                self.master_talon.set_control(self._postion_request)
             case self.CurrentState.CONTROLLED:
                 self._climb_request.output = self._climb_output
-                self._master_talon.set_control(self._climb_request)
+                self.master_talon.set_control(self._climb_request)
                 self._follower_talon.set_control(self._climb_request)
                 
         # If we're stalling at the bottom, start coasting in order to 
         # prevent overheating.
-        if (self._master_talon.get_velocity().value == 0 
-                and self._master_talon.get_closed_loop_error().value < 15
+        if (self.master_talon.get_velocity().value == 0 
+                and self.master_talon.get_closed_loop_error().value < 15
                 and self._current_state is self.CurrentState.LOWERED):
             self._stall_timer.start()
             
@@ -91,7 +91,7 @@ class LiftSubsystem(StateSubsystem):
             self._stall_timer.stop()
             self._stall_timer.reset()
             
-        self._position_pub.set(self._master_talon.get_position().value)
+        self._position_pub.set(self.master_talon.get_position().value)
         
     def _handle_state_transition(self):
         

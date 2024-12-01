@@ -17,7 +17,7 @@ from subsystems.lift import LiftSubsystem
 from subsystems.pivot import PivotSubsystem
 from subsystems.intake import IntakeSubsystem
 from subsystems.superstructure import Superstructure
-from telemetry import RobotState
+from robot_state import RobotState
 
 import math
 from pathplannerlib.auto import AutoBuilder
@@ -49,7 +49,8 @@ class RobotContainer:
         self._driver_controller = commands2.button.CommandXboxController(0)
         self._function_controller = commands2.button.CommandXboxController(1)
 
-        self._robot_state = RobotState()
+        self.robot_state = RobotState()
+        
 
         self.drivetrain = TunerConstants.create_drivetrain()
 
@@ -85,6 +86,7 @@ class RobotContainer:
         self.pivot = PivotSubsystem()
 
         self.superstructure = Superstructure(self.intake, self.pivot, self.drivetrain, self.lift)
+        self.robot_state.create_mechanism_2d(self.lift, self.pivot)
 
         # Path follower
         self._auto_chooser = AutoBuilder.buildAutoChooser("Auto Chooser")
@@ -204,28 +206,9 @@ class RobotContainer:
                 commands2.InstantCommand(lambda: self.lift.set_climb_output(-self._function_controller.getLeftTriggerAxis())).repeatedly()
             )
         )
-        
-        
-        """
-        self._function_controller.b().whileTrue(
-            ManualLift(self._function_controller, self.lift)
-        )
-
-        self._function_controller.a().onTrue(
-            self.lift.runOnce(self.lift.compressFull)#.alongWith(self.pivot.runOnce(self.pivot.stow))
-        )
-
-        self._function_controller.leftStick().onTrue(
-            self.lift.runOnce(self.lift.scoreShoot)#.alongWith(self.pivot.runOnce(self.pivot.scoreUpwards))
-        )
-
-        self._function_controller.rightStick().onTrue(
-            self.lift.runOnce(self.lift.raiseFull)#.alongWith(self.pivot.runOnce(self.pivot.stow))
-        )
-        """
 
         self.drivetrain.register_telemetry(
-            lambda state: self._robot_state.log_drivetrain_state(state)
+            lambda state: self.robot_state.log_drivetrain_state(state)
         )
 
     def getAutonomousCommand(self) -> commands2.Command:
