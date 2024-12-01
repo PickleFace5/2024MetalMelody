@@ -1,31 +1,44 @@
 {
   "hubs": [
     {
-      "x": 2553,
-      "y": 357,
-      "width": 1550,
-      "height": 830,
+      "x": 533,
+      "y": 134,
+      "width": 1825,
+      "height": 1149,
       "state": {
         "sidebar": {
-          "width": 364,
+          "width": 374,
           "expanded": [
             "/PathPlanner/currentPose/rotation",
             "/Drive",
             "/Pose",
             "/Pose/robotPose/translation",
             "/SmartDashboard/Field/Robot",
-            "/Telemetry"
+            "/NT",
+            "/NT/Telemetry",
+            "/NT/Telemetry/currentPose/rotation",
+            "/Telemetry/currentPose",
+            "/Telemetry/currentPose/translation",
+            "/NT/PathPlanner",
+            "/Superstructure",
+            "/Intake",
+            "/NT/Intake",
+            "/Pivot",
+            "/NT/Pivot",
+            "/Drivetrain",
+            "/Lift",
+            "/SmartDashboard"
           ]
         },
         "tabs": {
-          "selected": 1,
+          "selected": 5,
           "tabs": [
             {
               "type": 0,
               "title": "",
               "controller": null,
               "controllerUUID": "vrfifz3f3nnnj5rb8apz6vhtk4ln8xuz",
-              "renderer": "#/tab-reference/swerve",
+              "renderer": "#/",
               "controlsHeight": 0
             },
             {
@@ -103,7 +116,7 @@
               },
               "controllerUUID": "mgek5e9v859tdyzodro4hnhi2ihhmqar",
               "renderer": null,
-              "controlsHeight": 200
+              "controlsHeight": -100
             },
             {
               "type": 3,
@@ -112,12 +125,19 @@
                 "sources": [
                   {
                     "type": "robot",
-                    "logKey": "NT:/Pose/robotPose",
+                    "logKey": "NT:/Telemetry/currentPose",
                     "logType": "Pose2d",
                     "visible": true,
                     "options": {
-                      "model": "2024 KitBot"
+                      "model": "Larry"
                     }
+                  },
+                  {
+                    "type": "mechanism",
+                    "logKey": "NT:/SmartDashboard/The Mechanism",
+                    "logType": "Mechanism2d",
+                    "visible": true,
+                    "options": {}
                   },
                   {
                     "type": "ghost",
@@ -148,17 +168,17 @@
                 "cameraIndex": -1,
                 "orbitFov": 50,
                 "cameraPosition": [
-                  -0.09528336887580814,
-                  13.297671051771728,
-                  -3.234275302175057
+                  24.05474335425,
+                  25.77316993678196,
+                  13.759164170639517
                 ],
                 "cameraTarget": [
-                  0,
-                  0.5,
-                  0
+                  -8.397850166621184,
+                  16.492606833856104,
+                  0.07849618058140584
                 ]
               },
-              "controlsHeight": 200
+              "controlsHeight": 168
             },
             {
               "type": 9,
@@ -217,6 +237,22 @@
                 "orientation": 0
               },
               "controllerUUID": "0xw1qkc0ddeqabrzfyf1k6obrdw3emqt",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 10,
+              "title": "Mechanism",
+              "controller": [
+                {
+                  "type": "mechanism",
+                  "logKey": "NT:/SmartDashboard/The Mechanism",
+                  "logType": "Mechanism2d",
+                  "visible": true,
+                  "options": {}
+                }
+              ],
+              "controllerUUID": "jfcxvasd3o11d6b187q49dflrd8b5hrd",
               "renderer": null,
               "controlsHeight": 200
             }

@@ -1,8 +1,10 @@
+import math
 from ntcore import NetworkTableInstance
 from phoenix6 import SignalLogger, swerve, units
 from wpilib import DataLogManager, DriverStation, Field2d, Mechanism2d, SmartDashboard
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
+from wpimath import units
 
 from constants import Constants
 from subsystems.lift import LiftSubsystem
@@ -40,14 +42,14 @@ class RobotState:
         self._chassis_speeds.set(state.speeds)
     
     def create_mechanism_2d(self, lift: LiftSubsystem, pivot: PivotSubsystem):
-        self.mech = Mechanism2d(35, Constants.LiftConstants.k_top_pos + 30)
-        self.root = self.mech.getRoot("le_mechanism", 35/2, 0)
+        self.mech = Mechanism2d(0.61, 0.66)
+        self.root = self.mech.getRoot("le_mechanism", 0.61/2, 0)
         
         self.lift = self.root.appendLigament(
             "lift", 0, 90
         )
         self.pivot = self.lift.appendLigament(
-            "pivot", 15, 90
+            "pivot", 0.18, 90
         )
         SmartDashboard.putData("The Mechanism", self.mech)
         
@@ -55,5 +57,5 @@ class RobotState:
         self.pivot_subsystem = pivot
         
     def update_mechanism_2d(self) -> None:
-        self.lift.setLength(self.lift_subsystem.master_talon.get_position().value + 15)
+        self.lift.setLength(self.lift_subsystem.master_talon.get_position().value / (2 * math.pi) / Constants.LiftConstants.k_gear_ratio / 3 + 0.15)
         self.pivot.setAngle(self.pivot_subsystem.pivot_talon.get_position().value * 360)
