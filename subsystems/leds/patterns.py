@@ -1,4 +1,4 @@
-from wpilib import Color
+from wpilib import Color, Timer
 
 from abc import ABC, abstractmethod
 import colorsys
@@ -46,6 +46,31 @@ class SimpleLedPattern(LedPattern):
     @staticmethod
     def blank() -> LedPattern:
         return SimpleLedPattern(lambda buffer, i: buffer.set_LED(i, Color.kBlack))
+    
+class LedFlashPattern(LedPattern):
+    
+    def __init__(self, color: Color | str, period: float=0.25) -> None:
+        super().__init__(True)
+        self._period = period
+        if isinstance(color, str):
+            self._color = Color(f"{color}")
+        elif isinstance(color, Color):
+            self._color = color
+        else:
+            raise TypeError("Incorrect type for color, must be type Color or str")
+        self._timer = Timer()
+        self._led_on = False
+        
+    def apply(self, buffer):
+        if not self._timer.isRunning():
+            self._timer.start()
+        if self._timer.get() >= self._period:
+            self._led_on = not self._led_on
+            self._timer.reset()
+            
+        color = self._color if self._led_on else Color.kBlack
+        for i in range(buffer.get_length()):
+            buffer.set_LED(i, color)
     
 class LedPatternRainbow(LedPattern):
 

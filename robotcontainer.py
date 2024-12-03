@@ -7,12 +7,14 @@
 import commands2
 import commands2.button
 import commands2.cmd
+from commands2.button import Trigger
 from commands2.conditionalcommand import ConditionalCommand
 from commands2.sysid import SysIdRoutine
 
 from constants import Constants
 from generated.tuner_constants import TunerConstants
-from subsystems.leds import LedSubsystem
+from subsystems.leds import LedSubsystem, PatternLevel, Zone
+from subsystems.leds.patterns import LedFlashPattern
 from subsystems.lift import LiftSubsystem
 from subsystems.pivot import PivotSubsystem
 from subsystems.intake import IntakeSubsystem
@@ -24,11 +26,10 @@ from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.path import PathConstraints, PathPlannerPath
 from phoenix6 import swerve
 from phoenix6.swerve.utility.phoenix_pid_controller import PhoenixPIDController
-from wpilib import DriverStation, SmartDashboard
+from wpilib import Color, DriverStation, RobotBase, RobotController, SmartDashboard
 from wpimath.geometry import Rotation2d
 from wpimath.units import rotationsToRadians
 
-from commands.vibrate import VibrateController
 
 class RobotContainer:
     """
@@ -149,7 +150,8 @@ class RobotContainer:
         )
 
         # Run SysId routines when holding back/start and X/Y.
-        # Note that each routine should be run exactly once in a single log.
+        # Note that each routine should be run exactly once in a single 
+        # log.
         (self._driver_controller.back() & self._driver_controller.y()).whileTrue(
             self.drivetrain.sys_id_dynamic(SysIdRoutine.Direction.kForward)
         )
@@ -205,6 +207,14 @@ class RobotContainer:
                 self.superstructure.set_desired_state_command(self.superstructure.DesiredState.CLIMB),
                 commands2.InstantCommand(lambda: self.lift.set_climb_output(-self._function_controller.getLeftTriggerAxis())).repeatedly()
             )
+        )
+        
+        Trigger(lambda: self.intake.has_note()).debounce(0.05).whileTrue(
+            self.leds.show_pattern_command(LedFlashPattern(Color.kBlue, 0.1), PatternLevel.INTAKE_STATE).repeatedly()
+        )
+        
+        Trigger(lambda: self._function_controller.leftBumper() and not RobotBase.isReal()).debounce(0.05).whileTrue(
+            self.leds.show_pattern_command(LedFlashPattern(Color.kBlue, 0.1), PatternLevel.INTAKE_STATE).repeatedly()
         )
 
         self.drivetrain.register_telemetry(
