@@ -26,8 +26,8 @@ class LedPattern(ABC):
     
 class SimpleLedPattern(LedPattern):
 
-    def __init__(self, applier):
-        super().__init__(False)
+    def __init__(self, applier, is_dynamic: bool=False):
+        super().__init__(is_dynamic)
         self.applier = applier
 
     def apply(self, buffer: ZonedAddressableLEDBuffer) -> None:
@@ -36,8 +36,8 @@ class SimpleLedPattern(LedPattern):
 
     @staticmethod
     @overload
-    def solid(color: str) -> LedPattern:
-        return SimpleLedPattern.solid(Color(color))
+    def solid_from_string(color: str) -> LedPattern:
+        return SimpleLedPattern.solid_from_string(Color(color))
     
     @staticmethod
     def solid(color: Color) -> LedPattern:

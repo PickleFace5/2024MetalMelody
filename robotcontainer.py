@@ -181,7 +181,8 @@ class RobotContainer:
         )
         
         self._function_controller.rightBumper().whileTrue(
-            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.EJECT_NOTE)
+            (self.superstructure.set_desired_state_command(self.superstructure.DesiredState.EJECT_NOTE)
+             .alongWith(self.leds.show_pattern_command(LedFlashPattern(Color.kRed, 0.1), PatternLevel.INTAKE_STATE).repeatedly()))
         ).onFalse(
             self.superstructure.set_desired_state_command(self.superstructure.DesiredState.REGULAR_STATE)
         )
