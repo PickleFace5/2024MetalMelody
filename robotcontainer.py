@@ -211,7 +211,7 @@ class RobotContainer:
         )
         
         Trigger(lambda: self.intake.has_note()).debounce(0.05).whileTrue(
-            self.leds.show_pattern_command(LedFlashPattern(Color.kBlue, 0.1), PatternLevel.INTAKE_STATE).repeatedly()
+            self.leds.show_pattern_command(LedFlashPattern(Color.kBlue, 0.1), PatternLevel.INTAKE_STATE).repeatedly().withTimeout(0.75)
         )
         
         Trigger(lambda: self._function_controller.leftBumper() and not RobotBase.isReal()).debounce(0.05).whileTrue(
