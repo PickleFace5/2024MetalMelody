@@ -74,6 +74,9 @@ class LiftSubsystem(StateSubsystem):
             case self.CurrentState.RAISED:
                 self._postion_request.position = Constants.LiftConstants.k_top_pos
                 self.master_talon.set_control(self._postion_request)
+            case self.CurrentState.AIMED:
+                self._postion_request.position = Constants.LiftConstants.k_score_pos
+                self.master_talon.set_control(self._postion_request)
             case self.CurrentState.CONTROLLED:
                 self._climb_request.output = self._climb_output
                 self.master_talon.set_control(self._climb_request)
