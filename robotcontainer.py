@@ -6,7 +6,7 @@
 
 import commands2
 import commands2.button
-import commands2.cmd
+from commands2 import cmd
 from commands2.button import Trigger
 from commands2.conditionalcommand import ConditionalCommand
 from commands2.sysid import SysIdRoutine
@@ -86,7 +86,7 @@ class RobotContainer:
         self.lift = LiftSubsystem()
         self.pivot = PivotSubsystem()
 
-        self.superstructure = Superstructure(self.intake, self.pivot, self.drivetrain, self.lift)
+        self.superstructure = Superstructure(self.pivot, self.lift)
         self.robot_state.create_mechanism_2d(self.lift, self.pivot)
 
         # Path follower
@@ -171,47 +171,51 @@ class RobotContainer:
         )
 
         self._function_controller.leftBumper().whileTrue(
-            ConditionalCommand(
-                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.INTAKE_NOTE),
-                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.FIX_NOTE),
-                lambda: self.lift.get_current_state() is not self.lift.CurrentState.RAISED
+            cmd.parallel(
+                self.superstructure.set_goal_command(Superstructure.Goal.INTAKE),
+                self.intake.set_desired_state(IntakeSubsystem.DesiredState.INTAKE)
             )
         ).onFalse(
-            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_RETRACTED)
+            cmd.parallel(
+                self.superstructure.set_goal_command(Superstructure.Goal.DEFAULT_LOW),
+                self.intake.set_desired_state(IntakeSubsystem.DesiredState.IDLE)
+            )
         )
         
         self._function_controller.rightBumper().whileTrue(
-            (self.superstructure.set_desired_state_command(self.superstructure.DesiredState.EJECT_NOTE)
-             .alongWith(self.leds.show_pattern_command(LedFlashPattern(Color.kRed, 0.1), PatternLevel.INTAKE_STATE).repeatedly()))
+            cmd.parallel(
+                self.intake.set_desired_state(IntakeSubsystem.DesiredState.EJECT),
+                self.leds.show_pattern_command(LedFlashPattern(Color.kRed, 0.1), PatternLevel.INTAKE_STATE).repeatedly()
+            )
         ).onFalse(
-            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.REGULAR_STATE)
+            self.superstructure.set_goal_command(Superstructure.Goal.DEFAULT_LOW)
         )
         
         self._function_controller.y().onTrue(
-            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.AMP_SCORE_NORMAL)
+            self.superstructure.set_goal_command(Superstructure.Goal.SCORE_HIGH)
         )
         
         (self._function_controller.x() | self._driver_controller.x()).onTrue(
             ConditionalCommand(
-                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_EXTENDED),
-                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_RETRACTED),
+                self.superstructure.set_goal_command(Superstructure.Goal.DEFAULT_HIGH),
+                self.superstructure.set_goal_command(Superstructure.Goal.DEFAULT_LOW),
                 lambda: self.lift.get_current_state() is self.lift.CurrentState.RAISED
             )
         )
         
         self._function_controller.a().onTrue(
-            self.superstructure.set_desired_state_command(self.superstructure.DesiredState.DEFAULT_RETRACTED)
+            self.superstructure.set_goal_command(Superstructure.Goal.DEFAULT_LOW)
         )
         
         self._function_controller.b().onTrue(
             commands2.cmd.parallel(
-                self.superstructure.set_desired_state_command(self.superstructure.DesiredState.CLIMB),
+                self.superstructure.set_goal_command(Superstructure.Goal.CLIMB),
                 commands2.InstantCommand(lambda: self.lift.set_climb_output(-self._function_controller.getLeftTriggerAxis())).repeatedly()
             )
         )
         
-        Trigger(lambda: self.intake.has_note()).debounce(0.05).whileTrue(
-            self.leds.show_pattern_command(LedFlashPattern(Color.kBlue, 0.1), PatternLevel.INTAKE_STATE).repeatedly().withTimeout(0.75)
+        Trigger(lambda: self.intake.has_note()).debounce(0.05).onTrue(
+            self.leds.show_pattern_command(LedFlashPattern(Color.kBlue, 0.1), PatternLevel.INTAKE_STATE).repeatedly().withTimeout(1)
         )
         
         Trigger(lambda: self._function_controller.leftBumper() and not RobotBase.isReal()).debounce(0.05).whileTrue(
