@@ -63,11 +63,11 @@ class StateSubsystem(Subsystem, ABC, metaclass=StateSubsystemMeta):
             model[0].update(0.02)
 
             sim.set_raw_rotor_position(units.radiansToRotations(model[0].getAngularPosition())
-                                       * model[0].gearing())
+                                       * model[0].getGearing())
             sim.set_rotor_velocity(units.radiansToRotations(model[0].getAngularVelocity())
-                                       * model[0].gearing())
+                                       * model[0].getGearing())
             sim.set_rotor_acceleration(units.radiansToRotations(model[0].getAngularAcceleration())
-                                       * model[0].gearing())
+                                       * model[0].getGearing())
             
     def get_current_state(self) -> CurrentState:
         return self._current_state
